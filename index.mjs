@@ -1,64 +1,190 @@
-import { drawSnowflake } from "./snowflake.mjs";
+import { Point } from "./point.mjs";
+import { draw, Rectangle, rotate, Triangle } from "./rotate-2d.mjs";
+import { Snowflake } from "./snowflake.mjs";
 
 const WIDTH = 800;
 const HEIGHT = 600;
-const CENTER_X = Math.floor(WIDTH / 2);
-const CENTER_Y = Math.floor(HEIGHT / 2);
+const center = new Point(Math.floor(WIDTH / 2), Math.floor(HEIGHT / 2));
 
 let sides = 3;
 let depth = 3;
 
 /**
+ * @type{keyof typeof shapes}
+ */
+let curShape = "snowflake";
+const shapes = {
+  triangle: new Triangle(
+    new Point(center.x, center.y + 50),
+    new Point(center.x - 30, center.y),
+    new Point(center.x + 40, center.y - 20)
+  ),
+  rectangle: new Rectangle(new Point(center.x - 50, center.y + 50), 100, 100),
+  snowflake: new Snowflake(center, 3, 3, 1),
+};
+
+/**
+ * @param {string} shape
+ * @returns {boolean}
+ */
+function isRotatable(shape) {
+  return shape === "triangle" || shape === "rectangle";
+}
+
+/**
  * @type {HTMLCanvasElement}
  */
-const canvas = document.getElementById('canvas-id');
+const canvas = document.getElementById("canvas-id");
 const ctx = canvas.getContext("2d");
 
 if (!ctx) {
-    throw new Error('2d context not found');
+  throw new Error("2d context not found");
 }
 
 ctx.canvas.width = WIDTH;
 ctx.canvas.height = HEIGHT;
 
-drawSnowflake(ctx, CENTER_X, CENTER_Y, 3, 3, 1);
+// ugly params
+shapes.snowflake.draw(
+  ctx,
+  shapes.snowflake.pivot,
+  shapes.snowflake.depth,
+  shapes.snowflake.scale
+);
 
 /**
  * @type {HTMLInputElement}
  */
-const sidesInput = document.getElementsByName('sides')[0];
+const sidesInput = document.getElementsByName("sides")[0];
 if (!sidesInput) {
-    throw new Error('No sides input found');
+  throw new Error("No sides input found");
 }
 
-sidesInput.addEventListener('input', (ev) => {
-    const inputSides = +ev.target.value;
-    if (!Number.isInteger(inputSides) || inputSides < 1) {
-        return
-    }
+sidesInput.addEventListener("input", (ev) => {
+  if (curShape !== "snowflake") {
+    return;
+  }
 
-    sides = inputSides;
+  const inputSides = +ev.target.value;
+  if (!Number.isInteger(inputSides) || inputSides < 1) {
+    return;
+  }
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawSnowflake(ctx, CENTER_X, CENTER_Y, sides, depth, 1);
-})
+  sides = inputSides;
+
+  clearCanvas(ctx);
+  shapes.snowflake.sides = sides;
+  shapes.snowflake.draw(
+    ctx,
+    shapes.snowflake.pivot,
+    shapes.snowflake.depth,
+    shapes.snowflake.scale
+  );
+});
 
 /**
  * @type {HTMLInputElement}
  */
-const depthInput = document.getElementsByName('depth')[0];
+const depthInput = document.getElementsByName("depth")[0];
 if (!depthInput) {
-    throw new Error('No depth input found');
+  throw new Error("No depth input found");
 }
 
-depthInput.addEventListener('input', (ev) => {
-    const inputDepth = +ev.target.value;
-    if (!Number.isInteger(depth) || inputDepth < 1) {
-        return
-    }
+depthInput.addEventListener("input", (ev) => {
+  if (curShape !== "snowflake") {
+    return;
+  }
 
-    depth = inputDepth;
+  const inputDepth = +ev.target.value;
+  if (!Number.isInteger(depth) || inputDepth < 1) {
+    return;
+  }
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawSnowflake(ctx, CENTER_X, CENTER_Y, sides, depth, 1);
-})
+  depth = inputDepth;
+
+  clearCanvas(ctx);
+  shapes.snowflake.draw(
+    ctx,
+    shapes.snowflake.pivot,
+    depth,
+    shapes.snowflake.scale
+  );
+});
+
+canvas.addEventListener("wheel", (ev) => {
+  if (!isRotatable(curShape)) {
+    return;
+  }
+
+  const shape = shapes[curShape];
+  if (!shape) {
+    return;
+  }
+
+  let angle = Math.PI / 8;
+  if (ev.deltaY < 0) {
+    angle = -angle;
+  }
+
+  clearCanvas(ctx);
+  rotate(shape, center, angle);
+  draw(ctx, shape);
+});
+
+const snowflakeBtn = document.getElementById("render-snowflake");
+if (!snowflakeBtn) {
+  throw new Error("missing snowflake button");
+}
+
+snowflakeBtn.addEventListener("click", () => {
+  initSnowflake();
+});
+
+const rectangleBtn = document.getElementById("render-rectangle");
+if (!rectangleBtn) {
+  throw new Error("missing rectangle button");
+}
+
+rectangleBtn.addEventListener("click", () => {
+  initRectangle();
+});
+
+const triangleBtn = document.getElementById("render-triangle");
+if (!triangleBtn) {
+  throw new Error("missing triangle button");
+}
+
+triangleBtn.addEventListener("click", () => {
+  initTriangle();
+});
+
+export function initSnowflake() {
+  curShape = "snowflake";
+  clearCanvas(ctx);
+
+  shapes.snowflake.draw(
+    ctx,
+    shapes.snowflake.pivot,
+    shapes.snowflake.depth,
+    shapes.snowflake.scale
+  );
+}
+
+export function initRectangle() {
+  curShape = "rectangle";
+  clearCanvas(ctx);
+  draw(ctx, shapes.rectangle);
+}
+
+export function initTriangle() {
+  curShape = "triangle";
+  clearCanvas(ctx);
+  draw(ctx, shapes.triangle);
+}
+
+/**
+ * @param {CanvasRenderingContext2D} ctx
+ */
+function clearCanvas(ctx) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
