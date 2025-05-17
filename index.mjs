@@ -20,7 +20,7 @@ const shapes = {
     new Point(center.x + 40, center.y - 20)
   ),
   rectangle: new Rectangle(new Point(center.x - 50, center.y + 50), 100, 100),
-  snowflake: new Snowflake(center, 3, 3, 1),
+  snowflake: new Snowflake(center, 2, 1, 1),
 };
 
 /**
@@ -70,10 +70,9 @@ sidesInput.addEventListener("input", (ev) => {
     return;
   }
 
-  sides = inputSides;
+  shapes.snowflake.sides = inputSides;
 
   clearCanvas(ctx);
-  shapes.snowflake.sides = sides;
   shapes.snowflake.draw(
     ctx,
     shapes.snowflake.pivot,
@@ -100,22 +99,18 @@ depthInput.addEventListener("input", (ev) => {
     return;
   }
 
-  depth = inputDepth;
+  shapes.snowflake.depth = inputDepth;
 
   clearCanvas(ctx);
   shapes.snowflake.draw(
     ctx,
     shapes.snowflake.pivot,
-    depth,
+    shapes.snowflake.depth,
     shapes.snowflake.scale
   );
 });
 
 canvas.addEventListener("wheel", (ev) => {
-  if (!isRotatable(curShape)) {
-    return;
-  }
-
   const shape = shapes[curShape];
   if (!shape) {
     return;
@@ -127,8 +122,19 @@ canvas.addEventListener("wheel", (ev) => {
   }
 
   clearCanvas(ctx);
-  rotate(shape, center, angle);
-  draw(ctx, shape);
+
+  if (curShape === "snowflake") {
+    shapes.snowflake.rotationAngle += angle;
+    shapes.snowflake.draw(
+      ctx,
+      shapes.snowflake.pivot,
+      shapes.snowflake.depth,
+      shapes.snowflake.scale
+    );
+  } else {
+    rotate(shape, center, angle);
+    draw(ctx, shape);
+  }
 });
 
 const snowflakeBtn = document.getElementById("render-snowflake");

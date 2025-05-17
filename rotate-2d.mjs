@@ -121,7 +121,7 @@ export class Triangle {
  * @param {number} angle - radian
  * @return {Point}
  */
-function rotatePoint(p, pivot, angle) {
+export function rotatePoint(p, pivot, angle) {
   // relative to pivot
   const relX = p.x - pivot.x;
   const relY = p.y - pivot.y;

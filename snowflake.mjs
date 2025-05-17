@@ -1,4 +1,5 @@
 import { Point } from "./point.mjs";
+import { rotatePoint } from "./rotate-2d.mjs";
 
 export class Snowflake {
   /**
@@ -22,9 +23,9 @@ export class Snowflake {
    */
   r = 100;
   /**
-   * @type{Point[]}
+   * @type{number} radians
    */
-  #points = [];
+  rotationAngle = 0;
 
   /**
    * @param {Point} pivot
@@ -57,14 +58,16 @@ export class Snowflake {
     let angle = 0;
 
     for (let i = 0; i < this.sides; i++) {
-      const p1 = new Point(
+      let p1 = new Point(
         pivot.x + this.r * scale * Math.cos(angle),
         pivot.y + this.r * scale * Math.sin(angle)
       );
-      const p2 = new Point(2 * pivot.x - p1.x, 2 * pivot.y - p1.y);
-
-      // remember points
-      this.#points.push(p1, p2);
+      p1 = rotatePoint(p1, pivot, this.rotationAngle);
+      let p2 = new Point(
+        pivot.x - this.r * scale * Math.cos(angle),
+        pivot.y - this.r * scale * Math.sin(angle)
+      );
+      p2 = rotatePoint(p2, pivot, this.rotationAngle);
 
       ctx.beginPath();
       ctx.moveTo(p1.x, p1.y);
@@ -73,27 +76,9 @@ export class Snowflake {
 
       angle += Math.PI / this.sides;
 
-      this.draw(ctx, p1, depth - 1, scale * 0.5);
-      this.draw(ctx, p2, depth - 1, scale * 0.5);
+      this.draw(ctx, p1, depth - 1, scale * 0.5, this.rotationAngle);
+      this.draw(ctx, p2, depth - 1, scale * 0.5, this.rotationAngle);
     }
-  }
-
-  [Symbol.iterator]() {
-    let index = 0;
-    return {
-      next: () => {
-        if (index < this.#points.length) {
-          return {
-            value: this.#points[index++],
-            done: false,
-          };
-        }
-
-        return {
-          done: true,
-        };
-      },
-    };
   }
 }
 
